@@ -1,7 +1,7 @@
 {
     "type": "module",
-    "name": "osmptv2gtfscompare",
-    "description": "Data comparison between OpenStreetMap ptv2 routes and GTFS files",
+    "name": "GtfsMySql2Json",
+    "description": "",
     "main": "bin/index.js",
     "bin": {
         "sd": "./src/index.js"
@@ -20,7 +20,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/wwwouaiebe/OsmPtv2GtfsCompare.git"
+        "url": "git+https://github.com/wwwouaiebe/GtfsMySql2Json.git"
     },
     "engines": {
         "node": ">=20.9.0"
@@ -36,6 +36,6 @@
     },
     "author": "wwwouaiebe",
     "license": "GPL-3.0",
-    "sources": "https://github.com/wwwouaiebe/OsmPtv2GtfsCompare",
-    "homepage": "https://github.com/wwwouaiebe/OsmPtv2GtfsCompare#readme"
+    "sources": "https://github.com/wwwouaiebe/GtfsMySql2Json",
+    "homepage": "https://github.com/wwwouaiebe/GtfsMySql2Json#readme"
 }

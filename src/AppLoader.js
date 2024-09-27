@@ -94,7 +94,7 @@ class AppLoader {
 		// config
 		this.#createConfig ( options );
 
-		console.info ( '\nStarting OsmPtv2GtfsCompare...\n\n' );
+		console.info ( '\nStarting GtfsMySql2Json...\n\n' );
 		await theMySqlDb.start ( );
 
 		await new GtfsTreeBuilder ( ).build ( );
@@ -109,7 +109,7 @@ class AppLoader {
 
 		console.info ( `\nFiles generated in ${execTime} seconds.` );
 
-		console.info ( '\nOsmPtv2GtfsCompare ended...\n\n' );
+		console.info ( '\nGtfsMySql2Json ended...\n\n' );
 
 	}
 }
