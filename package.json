@@ -8,6 +8,9 @@
     },
     "version": "1.0.0",
     "keywords": [],
+    "dependencies": {
+        "mysql2": "latest"
+    },
     "devDependencies": {
         "eslint": "latest",
         "grunt": "latest",
@@ -24,8 +27,8 @@
     },
     "scripts": {
         "debug": "node node_modules/grunt/bin/grunt",
-        "runNode": "node ./src/index.js"
-     },
+        "runNode": "node ./src/index.js --dbName=gtfs_tec"
+    },
     "author": "wwwouaiebe",
     "license": "GPL-3.0",
     "sources": "https://github.com/wwwouaiebe/OsmPtv2GtfsCompare",

@@ -22,16 +22,58 @@ Changes:
 */
 /* ------------------------------------------------------------------------------------------------------------------------- */
 
+import GtfsTreeBuilder from './GtfsTreeBuilder.js';
+import theConfig from './Config.js';
+import theMySqlDb from './MySqlDb.js';
+
 /* ------------------------------------------------------------------------------------------------------------------------- */
 /**
- * Start the app:
- * - read and validate the arguments (nodejs) or the controls on the web page (browser)
- * - set the config
- * - remove the old files if any
+ * Coming soon
  */
 /* ------------------------------------------------------------------------------------------------------------------------- */
 
 class AppLoader {
+
+	/**
+     * The version number
+     * @type {String}
+     */
+
+	static get #version ( ) { return 'v1.0.0'; }
+
+	/**
+     * Coming soon
+     * @param {Object} options Coming soon
+     */
+
+	#createConfig ( options ) {
+		if ( options ) {
+			theConfig.dbName = options.dbName;
+			theConfig.appDir = process.cwd ( ) + '/node_modules/osmbus2mysql/src';
+		}
+		else {
+			process.argv.forEach (
+				arg => {
+					const argContent = arg.split ( '=' );
+					switch ( argContent [ 0 ] ) {
+					case '--dbName' :
+						theConfig.dbName = argContent [ 1 ] || theConfig.dbName;
+						break;
+					case '--version' :
+						console.error ( `\n\t\x1b[36mVersion : ${AppLoader.#version}\x1b[0m\n` );
+						process.exit ( 0 );
+						break;
+					default :
+						break;
+					}
+				}
+			);
+			theConfig.appDir = process.argv [ 1 ];
+		}
+
+		// the config is now frozen
+		Object.freeze ( theConfig );
+	}
 
 	/**
 	 * The constructor
@@ -43,9 +85,30 @@ class AppLoader {
 
 	/**
 	 * Load the app, searching all the needed infos to run the app correctly
+	 * @param {Object} options Coming soon
 	 */
 
-	async loadApp ( ) {
+	async loadApp ( options ) {
+
+		// config
+		this.#createConfig ( options );
+
+		console.info ( '\nStarting OsmPtv2GtfsCompare...\n\n' );
+		await theMySqlDb.start ( );
+
+		await new GtfsTreeBuilder ( ).build ( );
+
+		await theMySqlDb.end ( );
+
+		// end of the process
+		const deltaTime = process.hrtime.bigint ( ) - theConfig.startTime [ 0 ];
+
+		/* eslint-disable-next-line no-magic-numbers */
+		const execTime = String ( deltaTime / 1000000000n ) + '.' + String ( deltaTime % 1000000000n ).substring ( 0, 3 );
+
+		console.info ( `\nFiles generated in ${execTime} seconds.` );
+
+		console.info ( '\nOsmPtv2GtfsComparel ended...\n\n' );
 
 	}
 }
