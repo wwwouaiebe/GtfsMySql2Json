@@ -1,0 +1,33 @@
+{
+    "type": "module",
+    "name": "osmptv2gtfscompare",
+    "description": "Data comparison between OpenStreetMap ptv2 routes and GTFS files",
+    "main": "bin/index.js",
+    "bin": {
+        "sd": "./src/index.js"
+    },
+    "version": "1.0.0",
+    "keywords": [],
+    "devDependencies": {
+        "eslint": "latest",
+        "grunt": "latest",
+        "grunt-eslint": "latest",
+        "grunt-essimpledoc": "latest",
+        "grunt-wwwouaiebe-buildnumber": "latest"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/wwwouaiebe/OsmPtv2GtfsCompare.git"
+    },
+    "engines": {
+        "node": ">=20.9.0"
+    },
+    "scripts": {
+        "debug": "node node_modules/grunt/bin/grunt",
+        "runNode": "node ./src/index.js"
+     },
+    "author": "wwwouaiebe",
+    "license": "GPL-3.0",
+    "sources": "https://github.com/wwwouaiebe/OsmPtv2GtfsCompare",
+    "homepage": "https://github.com/wwwouaiebe/OsmPtv2GtfsCompare#readme"
+}
