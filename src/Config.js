@@ -38,13 +38,6 @@ class Config {
 	startTime = [];
 
 	/**
-	 * The directory where the app is installed. Coming from the app parameter
-	 * @type {String}
-	 */
-
-	appDir;
-
-	/**
 	 * The name of the db to use
 	 * @type {String}
 	 */
@@ -52,11 +45,17 @@ class Config {
 	dbName;
 
 	/**
+	 * The network to use
+	 * @type {String}
+	 */
+
+	network;
+
+	/**
 	 * The constructor
 	 */
 
 	constructor ( ) {
-		this.appDir = '';
 		this.dbName = '';
 	}
 

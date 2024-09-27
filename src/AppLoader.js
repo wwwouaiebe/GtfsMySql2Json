@@ -49,7 +49,6 @@ class AppLoader {
 	#createConfig ( options ) {
 		if ( options ) {
 			theConfig.dbName = options.dbName;
-			theConfig.appDir = process.cwd ( ) + '/node_modules/osmbus2mysql/src';
 		}
 		else {
 			process.argv.forEach (
@@ -58,6 +57,9 @@ class AppLoader {
 					switch ( argContent [ 0 ] ) {
 					case '--dbName' :
 						theConfig.dbName = argContent [ 1 ] || theConfig.dbName;
+						break;
+					case '--network' :
+						theConfig.network = argContent [ 1 ] || theConfig.network;
 						break;
 					case '--version' :
 						console.error ( `\n\t\x1b[36mVersion : ${AppLoader.#version}\x1b[0m\n` );
@@ -68,7 +70,6 @@ class AppLoader {
 					}
 				}
 			);
-			theConfig.appDir = process.argv [ 1 ];
 		}
 
 		// the config is now frozen
@@ -108,7 +109,7 @@ class AppLoader {
 
 		console.info ( `\nFiles generated in ${execTime} seconds.` );
 
-		console.info ( '\nOsmPtv2GtfsComparel ended...\n\n' );
+		console.info ( '\nOsmPtv2GtfsCompare ended...\n\n' );
 
 	}
 }

@@ -27,7 +27,12 @@
     },
     "scripts": {
         "debug": "node node_modules/grunt/bin/grunt",
-        "runNode": "node ./src/index.js --dbName=gtfs_tec"
+        "runTECL": "node ./src/index.js --dbName=gtfs_tec --network=L",
+        "runTECN": "node ./src/index.js --dbName=gtfs_tec --network=N",
+        "runTECB": "node ./src/index.js --dbName=gtfs_tec --network=B",
+        "runTECC": "node ./src/index.js --dbName=gtfs_tec --network=C",
+        "runTECH": "node ./src/index.js --dbName=gtfs_tec --network=H",
+        "runSTIB": "node ./src/index.js --dbName=gtfs_stib --network=STIB-MIVB"
     },
     "author": "wwwouaiebe",
     "license": "GPL-3.0",

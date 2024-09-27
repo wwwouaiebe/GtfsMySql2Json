@@ -24,6 +24,8 @@ Changes:
 
 import theMySqlDb from './MySqlDb.js';
 import fs from 'fs';
+import PolylineEncoder from './PolylineEncoder.js';
+import theConfig from './Config.js';
 
 /* ------------------------------------------------------------------------------------------------------------------------- */
 /**
@@ -39,8 +41,8 @@ class GtfsTreeBuilder {
      */
 
 	#gtfsTree = {
-		networkId : 'L',
-		vehicle : 'bus',
+		networkId : theConfig.network,
+		startDate : '',
 		routesMaster : []
 	};
 
@@ -49,7 +51,41 @@ class GtfsTreeBuilder {
      * @type {Object}
      */
 
+	#polylineEncoder;
+
+	/**
+     * Coming soon
+     * @type {Object}
+     */
+
+	/**
+     * Coming soon
+     * @type {Object}
+     */
+
 	#currentRouteMaster = {};
+
+	/**
+     * Coming soon
+     * @param { String} shapePk Coming soon
+     * @returns {String} coming soon
+     */
+
+	async #getNodes ( shapePk ) {
+		const nodes = await theMySqlDb.execSql (
+			'SELECT shapes.shape_pt_lat AS lat, shapes.shape_pt_lon AS lon ' +
+            'FROM shapes WHERE shapes.shape_pk = ' + shapePk + ' ' +
+            'ORDER BY shapes.shape_pk, shapes.shape_pt_sequence;'
+		);
+
+		let nodesArray = [];
+		nodes.forEach (
+			node => nodesArray.push ( [ Number.parseFloat ( node.lat ), Number.parseFloat ( node.lon ) ] )
+		);
+
+		// eslint-disable-next-line no-magic-numbers
+		return this.#polylineEncoder.encode ( nodesArray, [ 6, 6 ] );
+	}
 
 	/**
      * Coming soon
@@ -66,8 +102,8 @@ class GtfsTreeBuilder {
             'ORDER BY stop_times.stop_sequence;'
 		);
 		let route = {
-			shapePk : shapePk,
-			platforms : []
+			platforms : [],
+			nodes : ''
 		};
 		for ( let platformsCounter = 0; platformsCounter < platforms.length; platformsCounter ++ ) {
 			let platform = platforms [ platformsCounter ];
@@ -75,12 +111,12 @@ class GtfsTreeBuilder {
 				{
 					Id : platform.platformId,
 					Name : platform.platformName,
-					Order : platform.platformOrder,
-					Lat : platform.platformLat,
-					Lon : platform.platformLon
+					Lat : Number.parseFloat ( platform.platformLat ),
+					Lon : Number.parseFloat ( platform.platformLon )
 				}
 			);
 		}
+		route.nodes = await this.#getNodes ( shapePk );
 		this.#currentRouteMaster.routes.push ( route );
 	}
 
@@ -92,7 +128,7 @@ class GtfsTreeBuilder {
 		const shapesPk = await theMySqlDb.execSql (
 			'SELECT DISTINCT trips.shape_pk as shapePk ' +
             'FROM routes JOIN trips ON routes.route_pk = trips.route_pk ' +
-            'WHERE routes.agency_id = "' + this.#gtfsTree.networkId + '" ' +
+            'WHERE routes.agency_id = "' + theConfig.network + '" ' +
             'AND routes.route_short_name = "' + this.#currentRouteMaster.routeMasterRef + '";'
 		);
 
@@ -103,13 +139,32 @@ class GtfsTreeBuilder {
 
 	/**
      * Coming soon
-     * @param {String} agencyId Coming soon
      */
 
-	async #selectRoutesMaster ( agencyId ) {
-		const routesMaster = await theMySqlDb.execSql (
+	async #selectRoutesMaster ( ) {
+		let routesMaster = await theMySqlDb.execSql (
 			'SELECT DISTINCT routes.route_short_name AS routeMasterRef FROM routes ' +
-            'WHERE routes.agency_id = "' + agencyId + '";'
+            'WHERE routes.agency_id = "' + theConfig.network + '";'
+		);
+		routesMaster.sort (
+			( first, second ) => {
+
+				// split the name into the numeric part and the alphanumeric part:
+				// numeric part
+				let firstPrefix = String ( Number.parseInt ( first.routeMasterRef ) );
+				let secondPrefix = String ( Number.parseInt ( second.routeMasterRef ) );
+
+				// alpha numeric part
+				let firstPostfix = ( first.routeMasterRef ).replace ( firstPrefix, '' );
+				let secondPostfix = ( second.routeMasterRef ).replace ( secondPrefix, '' );
+
+				// complete the numeric part with spaces on the left and compare
+				let result =
+					( firstPrefix.padStart ( 5, ' ' ) + firstPostfix )
+						.localeCompare ( secondPrefix.padStart ( 5, ' ' ) + secondPostfix );
+
+				return result;
+			}
 		);
 		for ( let routesMasterCounter = 0; routesMasterCounter < routesMaster.length; routesMasterCounter ++ ) {
 			this.#currentRouteMaster = {
@@ -123,10 +178,24 @@ class GtfsTreeBuilder {
 	}
 
 	/**
+     * Coming soon
+     * @returns {String} Coming soon
+     */
+
+	async #getStartDate ( ) {
+		let startDate = await theMySqlDb.execSql ( 'SELECT feed_info.feed_start_date as startDate FROM feed_info LIMIT 1' );
+		if ( 0 < startDate.length && startDate [ 0 ].startDate ) {
+		    return startDate [ 0 ].startDate;
+		}
+		return '???';
+	}
+
+	/**
 	 * The constructor
 	 */
 
 	constructor ( ) {
+		this.#polylineEncoder = new PolylineEncoder ( );
 		Object.freeze ( this );
 	}
 
@@ -135,8 +204,9 @@ class GtfsTreeBuilder {
      */
 
 	async build ( ) {
-		await this.#selectRoutesMaster ( 'L' );
-		fs.writeFileSync ( './json/gtfs.json', JSON.stringify ( this.#gtfsTree ) );
+		this.#gtfsTree.startDate = await this.#getStartDate ( );
+		await this.#selectRoutesMaster ( );
+		fs.writeFileSync ( './json/gtfs-' + theConfig.network + '.json', JSON.stringify ( this.#gtfsTree ) );
  	}
 
 }
