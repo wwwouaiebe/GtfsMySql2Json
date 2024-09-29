@@ -103,16 +103,17 @@ class GtfsTreeBuilder {
 		);
 		let route = {
 			platforms : [],
-			nodes : ''
+			nodes : '',
+			shapePk : shapePk
 		};
 		for ( let platformsCounter = 0; platformsCounter < platforms.length; platformsCounter ++ ) {
 			let platform = platforms [ platformsCounter ];
 			route.platforms.push (
 				{
-					Id : platform.platformId,
-					Name : platform.platformName,
-					Lat : Number.parseFloat ( platform.platformLat ),
-					Lon : Number.parseFloat ( platform.platformLon )
+					id : platform.platformId,
+					name : platform.platformName,
+					lat : Number.parseFloat ( platform.platformLat ),
+					lon : Number.parseFloat ( platform.platformLon )
 				}
 			);
 		}
@@ -143,7 +144,7 @@ class GtfsTreeBuilder {
 
 	async #selectRoutesMaster ( ) {
 		let routesMaster = await theMySqlDb.execSql (
-			'SELECT DISTINCT routes.route_short_name AS routeMasterRef FROM routes ' +
+			'SELECT DISTINCT routes.route_short_name AS routeMasterRef, routes.route_type as routeMasterType FROM routes ' +
             'WHERE routes.agency_id = "' + theConfig.network + '";'
 		);
 		routesMaster.sort (
@@ -169,6 +170,7 @@ class GtfsTreeBuilder {
 		for ( let routesMasterCounter = 0; routesMasterCounter < routesMaster.length; routesMasterCounter ++ ) {
 			this.#currentRouteMaster = {
 				routeMasterRef : routesMaster [ routesMasterCounter ].routeMasterRef,
+				routeMasterType : Number.parseInt ( routesMaster [ routesMasterCounter ].routeMasterType ),
 				routes : []
 			};
 			await this.#selectShapesPkForRouteMaster ( );
