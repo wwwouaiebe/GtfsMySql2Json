@@ -98,13 +98,15 @@ class GtfsTreeBuilder {
             'stops.stop_lat AS platformLat ,stops.stop_lon AS platformLon ' +
             'FROM stop_times INNER JOIN stops ON stops.stop_pk = stop_times.stop_pk ' +
             'WHERE stop_times.trip_pk = ' +
-            '( SELECT trips.trip_pk FROM trips WHERE trips.shape_pk = ' + shapePk + ' LIMIT 1 ) ' +
+            '( SELECT trips.trip_pk FROM trips WHERE trips.shape_pk = ' + shapePk.shapePk + ' LIMIT 1 ) ' +
             'ORDER BY stop_times.stop_sequence;'
 		);
 		let route = {
 			platforms : [],
 			nodes : '',
-			shapePk : shapePk
+			shapePk : shapePk.shapePk,
+			startDate : shapePk.minStartDate,
+			endDate : shapePk.minStartDate
 		};
 		for ( let platformsCounter = 0; platformsCounter < platforms.length; platformsCounter ++ ) {
 			let platform = platforms [ platformsCounter ];
@@ -117,7 +119,7 @@ class GtfsTreeBuilder {
 				}
 			);
 		}
-		route.nodes = await this.#getNodes ( shapePk );
+		route.nodes = await this.#getNodes ( shapePk.shapePk );
 		this.#currentRouteMaster.routes.push ( route );
 	}
 
@@ -127,14 +129,36 @@ class GtfsTreeBuilder {
 
 	async #selectShapesPkForRouteMaster ( ) {
 		const shapesPk = await theMySqlDb.execSql (
-			'SELECT DISTINCT trips.shape_pk as shapePk ' +
-            'FROM routes JOIN trips ON routes.route_pk = trips.route_pk ' +
-            'WHERE routes.agency_id = "' + theConfig.network + '" ' +
-            'AND routes.route_short_name = "' + this.#currentRouteMaster.routeMasterRef + '";'
+
+			'SELECT ' +
+				'min(t.start_date) AS minStartDate,' +
+				'max(t.end_date) AS maxEndDate, ' +
+				't.route_pk AS routePk, ' +
+				't.shape_pk AS shapePk ' +
+				'FROM ' +
+					'( ' +
+						'SELECT DISTINCT ' +
+						'calendar.start_date AS start_date, ' +
+						'calendar.end_date AS end_date, ' +
+						'routes.route_pk AS route_pk, ' +
+						'trips.shape_pk AS shape_pk ' +
+						'FROM ' +
+						'( ' +
+							'(routes JOIN trips ON ((routes.route_pk = trips.route_pk)) ' +
+						') ' +
+						'JOIN calendar ' +
+						'ON ((trips.service_pk = calendar.service_pk)) ' +
+					') ' +
+					'WHERE routes.agency_id = "' + theConfig.network + '" ' +
+					'AND routes.route_short_name ="' + this.#currentRouteMaster.routeMasterRef + '" ' +
+				')  t ' +
+				'GROUP BY ' +
+				'shapePk ' +
+				'ORDER BY minStartDate,maxEndDate;'
 		);
 
 		for ( let shapesPkCounter = 0; shapesPkCounter < shapesPk.length; shapesPkCounter ++ ) {
-			await this.#selectPlatformsForShape ( shapesPk [ shapesPkCounter ].shapePk );
+			await this.#selectPlatformsForShape ( shapesPk [ shapesPkCounter ] );
 		}
 	}
 
@@ -179,6 +203,34 @@ class GtfsTreeBuilder {
 		}
 	}
 
+	#removeDuplicateRoutes ( ) {
+		this.#gtfsTree.routesMaster.forEach (
+			routeMaster => {
+				let routesMap = new Map ( );
+				routeMaster.routes.forEach (
+					route => {
+						let platformKey = '';
+						route.platforms.forEach (
+							platform => {
+								platformKey += platform.id;
+							}
+						);
+						let routeKey = platformKey + route.nodes;
+						if ( ! routesMap.get ( routeKey ) ) {
+							routesMap.set ( routeKey, route );
+						}
+					}
+				);
+				routeMaster.routes = [];
+
+				routesMap.forEach (
+					route => { routeMaster.routes.push ( route ); }
+				);
+
+			}
+		);
+	}
+
 	/**
      * Coming soon
      * @returns {String} Coming soon
@@ -208,6 +260,7 @@ class GtfsTreeBuilder {
 	async build ( ) {
 		this.#gtfsTree.startDate = await this.#getStartDate ( );
 		await this.#selectRoutesMaster ( );
+		this.#removeDuplicateRoutes ( );
 		fs.writeFileSync ( './json/gtfs-' + theConfig.network + '.json', JSON.stringify ( this.#gtfsTree ) );
  	}
 
